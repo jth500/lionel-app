@@ -9,3 +9,4 @@ streamlit_chat
 streamlit_pills
 trl
 python-dotenv
+plotly
