@@ -9,7 +9,7 @@ from utils import setup_logger
 logger = setup_logger(__name__)
 logger.debug("Running from top")  # just useful to undserstand the order of execution
 st.set_page_config(
-    page_title="lionel-app",
+    page_title="lionel - Selections",
 )
 
 

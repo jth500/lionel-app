@@ -10,7 +10,7 @@ from utils import setup_logger
 
 # Config
 st.set_page_config(
-    page_title="Lionel - Forecasts",
+    page_title="lionel - Forecasts",
 )
 logger = setup_logger(__name__)
 logger.debug("Running from top")  # just useful to undserstand the order of execution
