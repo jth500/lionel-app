@@ -22,6 +22,7 @@ def initialise_session_vars():
 
 def main():
     st.title("lionel FPL Selector 🦁")
+    st.markdown("Team Selections for Gameweek 1")
     with st.expander("More about lionel"):
         st.write(
             "lionel is a [Fantasy Premier League](https://github.com/jth500/maet-pln) team"
