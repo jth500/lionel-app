@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import streamlit as st
-from plot_team import create_plot
+from plot_team import create_plot, create_value_plot
 from utils import setup_logger
 
 
@@ -22,7 +22,7 @@ def initialise_session_vars():
 
 def main():
     st.title("lionel FPL Selector 🦁")
-    st.markdown("Team Selections for Gameweek 1")
+
     with st.expander("More about lionel"):
         st.write(
             "lionel is a [Fantasy Premier League](https://github.com/jth500/maet-pln) team"
@@ -32,6 +32,17 @@ def main():
             "It is built using four models: 1) a naive model, 2) a LightGBM"
             "regressor without exogenous variables, 3) a LightGBM regressor "
             "with exogenous variables, and 4) an LSTM model with ReLU activation."
+        )
+
+    tab1, tab2 = st.tabs(["🤖 Team Selection", ":chart: Team Forecasts and Values"])
+    with tab1:
+        st.header("Team Selections for Gameweek 1")
+        st.plotly_chart(create_plot(25, 1, pred_var=str(st.session_state.pred_var)))
+
+    with tab2:
+        st.header("Team Forecasts and Values for Gameweek 1")
+        st.plotly_chart(
+            create_value_plot(25, 1, pred_var=str(st.session_state.pred_var))
         )
 
 
@@ -72,5 +83,3 @@ if __name__ == "__main__":
     initialise_session_vars()
     sidebar()
     main()
-
-    st.plotly_chart(create_plot(25, 1, pred_var=str(st.session_state.pred_var)))

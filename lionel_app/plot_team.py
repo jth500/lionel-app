@@ -10,15 +10,15 @@ def _create_pitch():
     line_width = 3
     fig = go.Figure()
 
-    fig.add_vrect(x0=-350, x1=350, line=dict(color="black", width=4))  # width=3
+    fig.add_vrect(x0=-350, x1=350, line=dict(color="#9fbbe3", width=4))  # width=3
 
     fig.add_trace(
         go.Scatter(
             x=[-350, 350],
             y=[0, 0],
-            marker=dict(size=25, color="black"),
+            marker=dict(size=25, color="#9fbbe3"),
             mode="lines",
-            line=dict(color="black", width=line_width),
+            line=dict(color="#9fbbe3", width=line_width),
         )
     )
 
@@ -30,7 +30,7 @@ def _create_pitch():
         y0=-100,
         x1=100,
         y1=100,
-        line=dict(color="black", width=line_width - 1),
+        line=dict(color="#9fbbe3", width=line_width - 1),
     )
 
     fig.add_trace(
@@ -43,9 +43,9 @@ def _create_pitch():
                 -550,
             ],
             mode="lines",
-            line_color="black",
+            line_color="#9fbbe3",
             showlegend=False,
-            line=dict(color="black", width=line_width),
+            line=dict(color="#9fbbe3", width=line_width),
         )
     )
 
@@ -59,9 +59,9 @@ def _create_pitch():
                 550,
             ],
             mode="lines",
-            line_color="black",
+            line_color="#9fbbe3",
             showlegend=False,
-            line=dict(color="black", width=line_width),
+            line=dict(color="#9fbbe3", width=line_width),
         )
     )
 
@@ -82,7 +82,7 @@ def _create_pitch():
     return fig
 
 
-def _plot_players(first_xi, position, fig):
+def _plot_players(first_xi, position, fig, pred_var):
     df = first_xi.loc[first_xi.position == position]
 
     Y = {"FWD": 350, "MID": 75, "DEF": -250, "GK": -475}
@@ -102,19 +102,15 @@ def _plot_players(first_xi, position, fig):
             x=X,
             y=[Y[position]] * len(df),
             mode="markers+text",
-            marker=dict(size=25, color="black"),
+            marker=dict(size=25, color="#4B5563"),
             text=df["name"].str.split().str[-1],
             textposition="bottom center",
-            textfont=dict(color="black"),
+            textfont=dict(color="#4B5563"),
             textfont_size=10,
-            customdata=df[
-                [
-                    "name",
-                    "team_name",
-                ]
-            ],
+            customdata=df[["name", "team_name", f"pred_{pred_var}"]],
             hovertemplate="<b>%{customdata[0]}</b>"
             + "<br><br><b>Team:</b> %{customdata[1]}"
+            + "<br><b>Forecasted Points:</b> %{customdata[2]}"
             + "<extra></extra>",
         )
     )
@@ -134,19 +130,15 @@ def _plot_subs(team, fig, pred_var):
             x=X,
             y=Y,
             mode="markers",
-            marker=dict(size=25, color="black"),
+            marker=dict(size=25, color="#4B5563"),
             text=df["name"].str.split().str[-1],
             textposition="bottom left",
-            textfont=dict(color="black"),
+            textfont=dict(color="#4B5563"),
             textfont_size=10,
-            customdata=df[
-                [
-                    "name",
-                    "team_name",
-                ]
-            ],
+            customdata=df[["name", "team_name", f"pred_{pred_var}"]],
             hovertemplate="<b>%{customdata[0]}</b>"
             + "<br><br><b>Team:</b> %{customdata[1]}"
+            + "<br><b>Forecasted Points:</b> %{customdata[2]}"
             + "<extra></extra>",
         )
     )
@@ -156,13 +148,14 @@ def _plot_subs(team, fig, pred_var):
 def create_plot(season, next_gw, pred_var="LSTMWithReLU"):
 
     players = pd.read_csv(DATA / f"team_selection_{next_gw}_{season}.csv")
+    players[f"pred_{pred_var}"] = players[f"pred_{pred_var}"].round(0)
     players = players.rename(columns={"unique_id": "name"})
     team = players[players[f"picked_{pred_var}"] == 1]
     first_xi = team.loc[team[f"first_xi_{pred_var}"] == 1]
 
     fig = _create_pitch()
     for pos in ["FWD", "MID", "DEF", "GK"]:
-        _plot_players(first_xi, pos, fig)
+        _plot_players(first_xi, pos, fig, pred_var)
 
     fig = _plot_subs(team, fig, pred_var)
     fig.update_layout(
@@ -171,4 +164,68 @@ def create_plot(season, next_gw, pred_var="LSTMWithReLU"):
         margin={"t": 10, "b": 0},
     )
 
+    return fig
+
+
+def create_value_plot(season, next_gw, pred_var="LSTMWithReLU"):
+    df_team = pd.read_csv(DATA / f"team_selection_{next_gw}_{season}.csv")
+    # df_team = pd.read_csv(DATA / f"team_selection_{next_gw}_{season}.csv")
+    df_team[f"pred_{pred_var}"] = df_team[f"pred_{pred_var}"].round(0)
+    df_not_picked = df_team[df_team[f"picked_{pred_var}"] == 0]
+    df_picked = df_team[df_team[f"picked_{pred_var}"] == 1]
+
+    fig = go.Figure()
+
+    # Plot the unpicked players
+    fig.add_trace(
+        go.Scatter(
+            x=df_not_picked[df_not_picked[f"picked_{pred_var}"] == 0].value,
+            y=df_not_picked[df_not_picked[f"picked_{pred_var}"] == 0][
+                f"pred_{pred_var}"
+            ],
+            marker=dict(
+                color="#9fbbe3",
+            ),
+            mode="markers",
+            customdata=df_not_picked[["unique_id", "team_name", f"pred_{pred_var}"]],
+            hovertemplate="<b>%{customdata[0]}</b>"
+            + "<br><br><b>Team:</b> %{customdata[1]}"
+            + "<br><b>Forecasted Points:</b> %{customdata[2]}"
+            + "<extra></extra>",
+        )
+    )
+
+    # Plot the picked players
+    fig.add_trace(
+        go.Scatter(
+            x=df_picked.value,
+            y=df_picked[f"pred_{pred_var}"],
+            marker=dict(
+                color="#4B5563",
+            ),
+            mode="markers",
+            customdata=df_picked[["unique_id", "team_name", f"pred_{pred_var}"]],
+            hovertemplate="<b>%{customdata[0]}</b>"
+            + "<br><br><b>Team:</b> %{customdata[1]}"
+            + "<br><b>Forecasted Points:</b> %{customdata[2]}"
+            + "<extra></extra>",
+        )
+    )
+
+    fig.update_layout(
+        autosize=False,
+        width=700,
+        height=800,
+        showlegend=False,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis_title="Player Value (as of previous GW)",
+        yaxis_title="Forecasted Points",
+        yaxis_visible=True,
+        yaxis_showticklabels=False,
+        xaxis_visible=True,
+        xaxis_showticklabels=False,
+        font=dict(family="sans-serif", color="#4B5563"),
+        margin={"t": 10, "b": 0},
+    )
     return fig
