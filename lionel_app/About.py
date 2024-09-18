@@ -8,7 +8,6 @@ from pathlib import Path
 
 # GLOBALS TO BE IMPORTED ELSEWHERE
 DATA = Path(__file__).parents[1] / "data"
-print(DATA)
 dbm = DBManager(DATA / "fpl.db")
 NEXT_GW = get_gameweek(dbm)
 
@@ -16,6 +15,7 @@ NEXT_GW = get_gameweek(dbm)
 # Config
 logger = setup_logger(__name__)
 logger.debug("Running from top")  # just useful to undserstand the order of execution
+logger.debug(f"DATA dir: {DATA}")
 
 
 @st.cache_data(ttl=600, show_spinner="Pulling data...")
@@ -45,9 +45,26 @@ def body_model():
     st.write("**Match Level**")
     st.write(
         "The model estimates the number of goals scored by the home and away teams using "
-        "a Poisson regression (à la Baio and Blangiardo). The Poisson rate parameter is modelled as"
+        "a Poisson regression (à la Baio and Blangiardo). The Poisson rate parameter is modelled as "
         "a function of an intercept, the teams' attack and defence strengths, and a "
-        "dummy for home advantage."
+        "dummy for home advantage. For the home team:"
+    )
+    st.latex(
+        r"""
+        \begin{align*}
+        \text{N}_{\text{goals, home}} &\sim \text{Poisson}(\lambda_{\text{home}}) \\
+        \text{N}_{\text{goals conceded, home}} &\sim \text{Poisson}(\lambda_{\text{away}})
+        \end{align*}
+        """
+    )
+    st.write("Where:")
+    st.latex(
+        r"""
+        \text{log}(\lambda_{\text{home}}) = \beta_0 + \beta_{\text{home advantage}} + \beta_{\text{attack, home team}} + \beta_{\text{defence, away team}}
+        """
+    )
+    st.write(
+        "With a similar formulation for the away team that excludes the home advantage term."
     )
     st.write("**Player Level**")
     st.write(
@@ -66,18 +83,59 @@ def body_model():
         "Expected points is then modelled as conditional on the sum of the player's goal contributions, "
         "clean sheets, and the random effect, after accounting for the different points for each event by position."
     )
-    st.write("A stylised DAG for the model is shown below.")
+    st.latex(
+        r"""\text{Points}_{\text{player, match}} \sim \mathcal{N}(\mu_{\text{player, match}} \times \frac{\text{mins}}{90}, \sigma^2 )"""
+    )
+    st.latex(
+        r"""
+        \begin{align*}
+        \mu_{\text{player, match}} &= \text{v}_{\text{goals, position}}\text{n}_{\text{goals, player}} + \text{v}_{\text{assists, position}}\text{n}_{\text{assists, player}} \\ &+ \text{v}_{\text{clean sheet, position}}\gamma_\text{clean sheet, home} + \alpha_\text{player}
+        \end{align*}
+        """
+    )
+    st.write("Where:")
+    st.latex(
+        r"""
+        \begin{array}{l}
+        &\text{n}_{\text{goals, player}} \\
+        &\text{n}_{\text{assists, player}} \\
+        &\text{n}_\text{neither, player}
+        \end{array}
+        \sim \text{Multinomial}(\text{N}_\text{goals, home}, \text{p}_{\text{score, player}}, \text{p}_{\text{assist, player}}, \text{p}_{\text{neither, player}})
+        """
+    )
 
-    st.image("/Users/toby/Dev/lionel-app/data/Flowchart.png")
+    st.latex(
+        r"""
+        \begin{align*}
+
+            \gamma_\text{clean sheet, home} = 
+            \begin{cases}
+            1, & \text{if}\ \text{N}_{\text{goals conceded, home}} = 0 \\
+            0, & \text{otherwise}
+            \end{cases}
+        \end{align*}
+        """
+    )
+    st.latex(
+        r"""\alpha_{\text{player}} \sim \mathcal{N}(\mu_\text{player}, \sigma_{\alpha}^2)"""
+    )
+    st.markdown(
+        r"""$\text{v}_{\text{event, position}}$ denotes the number of points that each position earns for a goal, assist, or clean sheet, and $\frac{\text{mins}}{90}$ is the ratio of expected minutes played in the match."""
+    )
+
+    st.write("A stylised directed acyclic graph for the model is shown below.")
+
+    st.image("Flowchart.png")
     st.subheader("Predictions")
 
     st.write(
         "After building the model, it is used simulate team and player outcomes. For example, the plot below shows the "
         "distribution of scores for Man City v Arsenal on Sunday 22nd September 2024. The results seem intuitive: both "
-        "are strong defensive teams, and the model predicts a low-scoring game."
+        "are strong defensive teams, and the model predicts a low-scoring game (slightly) in favour of the home side."
         ""
     )
-    # st.image("/Users/toby/Dev/lionel-app/data/Screenshot 2024-09-18 at 14.02.26.png")
+
     st.write("**Man City v Arsenal: Posterior Predictive Distribution of Scorelines**")
     st.plotly_chart(build_scoreline_plot(get_ars_city(), "Manchester City", "Arsenal"))
 
@@ -90,7 +148,7 @@ def body_model():
         "that their main source of points is clean sheets, which is a binary outcome for the match."
     )
     st.write("**Man City v Arsenal: Posterior Predictive Distribution of Points**")
-    st.image("/Users/toby/Dev/lionel-app/data/plot_posterior.png")
+    st.image("plot_posterior.png")
 
     st.write(
         "Predictions for scorelines from the match-level model for the next gameweek can be seen on the [Scoreline Predictions](/Scoreline_Predictions) page. "
@@ -102,7 +160,9 @@ def body_optimisation():
     st.subheader("Team Selection")
     st.write(
         "The team selection problem is formulated as a linear programming problem. The objective is to maximise "
-        "expected points subject the various team, position, and cost constraints of the FPL game. "
+        "expected points subject the various team, position, and cost constraints of the FPL game. Expected points are formulated "
+        "as the mean expected points of the next five games. This reflects the cost of transfers; players should be selected "
+        "to maximise points over several gameweeks."
     )
     st.write(
         "This is solved using the [PuLP](https://coin-or.github.io/pulp/) Python library."

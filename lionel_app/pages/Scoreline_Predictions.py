@@ -41,7 +41,32 @@ def get_teams():
 
 def main():
 
-    st.title("lionel FPL Selector 🦁")
+    st.title("🦁 Scoreline Predictions")
+    with st.expander("More about scoreline predictions"):
+
+        st.write(
+            "The following plot shows the posterior distribution of goals for the selected home and away team. "
+            "These values show the posterior distribution of the number of goals scored, for given home and away strengths, in the following statistical model:"
+        )
+
+        st.latex(
+            r"""\text{goals}_{\text{home}} \sim \text{Poisson}(\lambda_{\text{home}})"""
+        )
+        st.latex(
+            r"""\text{goals}_{\text{away}} \sim \text{Poisson}(\lambda_{\text{away}})"""
+        )
+
+        st.write("Where:")
+        # latex aligned
+        st.latex(
+            r"""
+            \begin{align*}
+                \text{log}(\lambda_{\text{home}}) &= \beta_0 + \beta_{\text{home advantage}} + \beta_{\text{attack, home team}} + \beta_{\text{defence, away team}} \\ 
+                \text{log}(\lambda_{\text{away}}) &= \beta_0 + \beta_{\text{defence, home team}} + \beta_{\text{attack, away team}}
+
+            \end{align*}
+            """
+        )
 
     # Not great to reload this on each run...
     df_scoreline = get_df_scoreline()

@@ -20,7 +20,7 @@ def get_df_sel():
 
 
 def main():
-    st.title("lionel FPL Selector 🦁")
+    st.title("🦁 Team Selections")
     df_sel = get_df_sel()
 
     tab1, tab2 = st.tabs(["🤖 Team Selection", ":chart: Team Forecasts and Values"])
