@@ -8,7 +8,14 @@ from pathlib import Path
 
 # GLOBALS TO BE IMPORTED ELSEWHERE
 DATA = Path(__file__).parents[1] / "data"
-dbm = DBManager(DATA / "fpl.db")
+
+if "Users/toby/" in str(DATA):
+    p = Path(__file__).parents[2] / "lionel/data"
+else:
+    p = DATA
+
+dbm = DBManager(p / "fpl.db")
+print(Path(__file__))
 NEXT_GW = get_gameweek(dbm)
 
 

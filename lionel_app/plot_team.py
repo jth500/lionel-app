@@ -120,7 +120,7 @@ def _plot_players(first_xi, position, fig):
 
 def _plot_subs(team, fig):
 
-    df = team.loc[team["first_xi"] == 0]
+    df = team.loc[team["xi"] == 0]
 
     X = [375] * 4
     Y = [-90, -30, 30, 90]
@@ -150,8 +150,8 @@ def create_plot(players):
     # players = pd.read_csv(DATA / f"team_selection_{next_gw}_{season}.csv")
     players["mean_points_pred"] = players["mean_points_pred"].round(1)
     players["name"] = players["player"].str.split("_").str[1]
-    team = players[players["picked"] == 1]
-    first_xi = team.loc[team["first_xi"] == 1]
+    team = players[players["xv"] == 1]
+    first_xi = team.loc[team["xi"] == 1]
 
     fig = _create_pitch()
     for pos in ["FWD", "MID", "DEF", "GK"]:
@@ -172,8 +172,8 @@ def create_value_plot(df_team):
     # df_team = pd.read_csv(DATA / f"team_selection_{next_gw}_{season}.csv")
     df_team["name"] = df_team["player"].str.split("_").str[1]
     df_team["mean_points_pred"] = df_team["mean_points_pred"].round(1)
-    df_not_picked = df_team[df_team["picked"] == 0]
-    df_picked = df_team[df_team["picked"] == 1]
+    df_not_picked = df_team[df_team["xv"] == 0]
+    df_picked = df_team[df_team["xv"] == 1]
 
     fig = go.Figure()
 

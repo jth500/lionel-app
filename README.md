@@ -27,7 +27,7 @@ and $\lambda_{\text{away}}$ has a similar formulation.
 Then, at the player level:
 
 $$
-\text{Points}_{\text{player, match}} \sim \mathcal{N}(\mu_{\text{player, match}}, \sigma^2 )
+\text{Points}_{\text{player, match}} \sim \mathcal{N}(\frac{\text{minutes}}{90}\mu_{\text{player, match}}, \sigma^2 )
 $$
 
 where:
