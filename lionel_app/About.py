@@ -1,28 +1,29 @@
-import streamlit as st
-from utils import setup_logger, get_gameweek
-from connector import DBManager
+from pathlib import Path
+
 import pandas as pd
 import plotly
+import streamlit as st
+from connector import DBManager
 from plot_team import build_scoreline_plot
-from pathlib import Path
+from utils import get_gameweek, setup_logger
 
 # GLOBALS TO BE IMPORTED ELSEWHERE
 DATA = Path(__file__).parents[1] / "data"
+# Config
+logger = setup_logger(__name__)
+logger.debug("Running from top")  # just useful to undserstand the order of execution
+logger.debug(f"DATA dir: {DATA}")
 
 if "Users/toby/" in str(DATA):
     p = Path(__file__).parents[2] / "lionel/data"
 else:
     p = DATA
 
-dbm = DBManager(p / "fpl.db")
-print(Path(__file__))
+logger.debug("DB: {}".format(p / "lionel.db"))
+dbm = DBManager(p / "lionel.db")
 NEXT_GW = get_gameweek(dbm)
-
-
-# Config
-logger = setup_logger(__name__)
-logger.debug("Running from top")  # just useful to undserstand the order of execution
-logger.debug(f"DATA dir: {DATA}")
+# NEXT_GW = 5
+logger.debug(f"Next gameweek: {NEXT_GW}")
 
 
 @st.cache_data(ttl=600, show_spinner="Pulling data...")

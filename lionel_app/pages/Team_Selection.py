@@ -1,11 +1,11 @@
 from pathlib import Path
+
 import pandas as pd
 import streamlit as st
+from About import NEXT_GW, dbm
+from connector import DBManager
 from plot_team import create_plot, create_value_plot
 from utils import setup_logger
-from connector import DBManager
-from About import NEXT_GW, dbm
-
 
 # Config
 logger = setup_logger(__name__)
@@ -14,9 +14,17 @@ logger.debug("Running from top")  # just useful to undserstand the order of exec
 
 @st.cache_data(ttl=600, show_spinner="Pulling data...")
 def get_df_sel():
-    return pd.DataFrame(
-        dbm.query(f"SELECT * FROM selections WHERE gameweek = {NEXT_GW}").fetchall()
+    q = f"""
+    SELECT *
+    FROM selections
+    WHERE created_at = (
+        SELECT MAX(created_at)
+        FROM selections
+        WHERE gameweek = {NEXT_GW}
     )
+    AND gameweek = {NEXT_GW};    
+    """
+    return pd.DataFrame(dbm.query(q).fetchall())
 
 
 def main():

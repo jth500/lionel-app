@@ -1,10 +1,8 @@
-import streamlit as st
-
-
-from About import dbm, NEXT_GW
 import pandas as pd
-from utils import setup_logger
+import streamlit as st
+from About import NEXT_GW, dbm
 from plot_team import build_scoreline_plot
+from utils import setup_logger
 
 logger = setup_logger(__name__)
 logger.debug("Running from top")  # just useful to undserstand the order of execution
@@ -27,8 +25,21 @@ def get_df_scoreline():
 
 @st.cache_data(ttl=600, show_spinner="Pulling data...")
 def get_next_matches():
-    df = pd.DataFrame(dbm.query("SELECT * from next_games").fetchall())
-    matches = (df["home_team"] + " vs " + df["away_team"]).to_list()
+    q = f"""
+    SELECT home.name as home, away.name as away
+    FROM fixtures
+    INNER JOIN teams as away
+    ON fixtures.home_id = away.id
+
+    INNER JOIN teams as home
+    ON fixtures.away_id = home.id
+
+    WHERE season = 25 AND gameweek = {NEXT_GW}
+    """
+    df = pd.DataFrame(dbm.query(q).fetchall())
+
+    matches = (df["home"] + " vs " + df["away"]).to_list()
+    print(matches)
     return matches
 
 
