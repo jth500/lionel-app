@@ -3,7 +3,6 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 from About import NEXT_GW, dbm
-from connector import DBManager
 from plot_team import create_plot, create_value_plot
 from utils import setup_logger
 

@@ -1,9 +1,9 @@
+import pandas as pd
 import streamlit as st
 from About import dbm
-import pandas as pd
-from utils import setup_logger
 from plot_players import build_player_inf_plot
 from plot_team import build_team_inf_plot
+from utils import setup_logger
 
 logger = setup_logger(__name__)
 logger.debug("Running from top")  # just useful to undserstand the order of execution
@@ -18,14 +18,30 @@ def initialise_session_vars():
 
 @st.cache_data(ttl=600, show_spinner="Pulling data...")
 def get_df_player_inf():
-    df = pd.DataFrame(dbm.query("SELECT * FROM player_inference").all())
+    q = """
+    SELECT * 
+    FROM player_inference
+    WHERE created_at = (
+            SELECT MAX(created_at)
+            FROM player_inference
+        )
+    """
+    df = pd.DataFrame(dbm.query(q).all())
     df["mean_minutes"] = df["mean_minutes"].round(0)
     return df
 
 
 @st.cache_data(ttl=600, show_spinner="Pulling data...")
 def get_df_team_inf():
-    df_team_inf = pd.DataFrame(dbm.query("SELECT * FROM team_inference").all())
+    q = """
+    SELECT * 
+    FROM team_inference
+    WHERE created_at = (
+            SELECT MAX(created_at)
+            FROM team_inference
+        )
+    """
+    df_team_inf = pd.DataFrame(dbm.query(q).all())
     df_team_inf[["attack", "defence"]] = df_team_inf[["attack", "defence"]]
     return df_team_inf
 
